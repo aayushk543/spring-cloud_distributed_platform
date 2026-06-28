@@ -2,7 +2,7 @@
 
 A production-grade **distributed systems platform** built with Spring Boot 3, demonstrating microservices architecture, event-driven communication, and container orchestration.
 
-## 🏗️ Architecture
+## Architecture
 
 ```
 ┌─────────────────────────────────────────────────────┐
@@ -40,7 +40,7 @@ A production-grade **distributed systems platform** built with Spring Boot 3, de
 └──────────────────────────────────────────────────┘
 ```
 
-## 📦 Services
+## Services
 
 | Service | Port | Stack | Description |
 |---------|------|-------|-------------|
@@ -54,7 +54,7 @@ A production-grade **distributed systems platform** built with Spring Boot 3, de
 | **Inventory Service** | 8086 | Kafka, JPA @Version | Saga participant, optimistic locking |
 | **Notification Service** | 8087 | Kafka | Event-driven notification consumer |
 
-## 🔑 Key Concepts Demonstrated
+## Key Concepts Demonstrated
 
 ### 1. Job Queue with Redis + Kafka
 - **Priority scheduling** via Redis Sorted Sets (ZADD/ZPOPMIN)
@@ -88,7 +88,7 @@ A production-grade **distributed systems platform** built with Spring Boot 3, de
 - **Idempotency keys** prevent duplicate orders
 - **Saga audit log** for debugging/recovery
 
-## 🚀 Quick Start
+##  Quick Start
 
 ### Prerequisites
 - Docker & Docker Compose
@@ -125,7 +125,7 @@ k6 run load-tests/checkout-saga-test.js
 k6 run load-tests/chat-websocket-test.js
 ```
 
-## ☸️ Kubernetes Deployment
+##  Kubernetes Deployment
 
 ```bash
 # Create namespace and config
@@ -152,7 +152,7 @@ kubectl apply -f k8s/hpa.yml
 - **Resource Limits**: CPU/memory requests and limits on all pods
 - **Health Checks**: Readiness + liveness probes on all services
 
-## 📁 Project Structure
+##  Project Structure
 
 ```
 distributed-platform/
@@ -179,7 +179,7 @@ distributed-platform/
 └── README.md
 ```
 
-## 🧪 Testing
+## 🧪Testing
 
 | Test Suite | What It Validates | Target |
 |------------|-------------------|--------|
@@ -188,7 +188,7 @@ distributed-platform/
 | `checkout-saga-test.js` | End-to-end saga with compensation | >50% completion rate |
 | `chat-websocket-test.js` | WebSocket connections & message delivery | 500 VUs, p95 < 500ms |
 
-## 🛠️ Tech Stack
+## Tech Stack
 
 - **Language**: Java 17
 - **Framework**: Spring Boot 3.2, Spring Cloud 2023.0
