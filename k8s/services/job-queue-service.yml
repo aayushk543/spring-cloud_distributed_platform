@@ -1,0 +1,47 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: job-queue-service
+  namespace: distributed-platform
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: job-queue-service
+  template:
+    metadata:
+      labels:
+        app: job-queue-service
+    spec:
+      containers:
+        - name: job-queue-service
+          image: distributed-platform/job-queue-service:latest
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 8082
+          envFrom:
+            - configMapRef:
+                name: platform-config
+          env:
+            - name: SPRING_DATASOURCE_URL
+              value: "jdbc:postgresql://postgres:5432/job_db"
+          resources:
+            requests: { memory: "256Mi", cpu: "200m" }
+            limits: { memory: "512Mi", cpu: "500m" }
+          readinessProbe:
+            httpGet: { path: /actuator/health, port: 8082 }
+            initialDelaySeconds: 30
+            periodSeconds: 10
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: job-queue-service
+  namespace: distributed-platform
+spec:
+  selector:
+    app: job-queue-service
+  ports:
+    - port: 8082
+      targetPort: 8082
+  type: ClusterIP

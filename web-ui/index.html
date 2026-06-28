@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Distributed Platform Dashboard</title>
+    <meta name="description" content="Microservices Platform Dashboard - Job Queue, Chat, Checkout Saga, and more">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <nav class="navbar">
+        <div class="nav-brand">
+            <span class="logo">⚡</span>
+            <span>Distributed Platform</span>
+        </div>
+        <div class="nav-links">
+            <a href="#" class="nav-link active" data-tab="dashboard">Dashboard</a>
+            <a href="#" class="nav-link" data-tab="jobs">Job Queue</a>
+            <a href="#" class="nav-link" data-tab="chat">Chat</a>
+            <a href="#" class="nav-link" data-tab="checkout">Checkout</a>
+            <a href="#" class="nav-link" data-tab="logs">Logs</a>
+        </div>
+        <div class="nav-auth" id="authSection">
+            <button class="btn btn-primary" id="loginBtn" onclick="showModal('loginModal')">Login</button>
+        </div>
+    </nav>
+
+    <!-- Dashboard Tab -->
+    <main id="tab-dashboard" class="tab-content active">
+        <div class="hero">
+            <h1>Distributed Systems Platform</h1>
+            <p>Microservices • Kafka • Redis • Kubernetes</p>
+        </div>
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-icon">🔧</div>
+                <div class="stat-value" id="totalServices">8</div>
+                <div class="stat-label">Microservices</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon">📦</div>
+                <div class="stat-value" id="totalJobs">-</div>
+                <div class="stat-label">Jobs Processed</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon">💬</div>
+                <div class="stat-value" id="totalRooms">-</div>
+                <div class="stat-label">Chat Rooms</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon">🛒</div>
+                <div class="stat-value" id="totalOrders">-</div>
+                <div class="stat-label">Orders</div>
+            </div>
+        </div>
+        <div class="architecture-section">
+            <h2>Architecture Overview</h2>
+            <div class="service-grid">
+                <div class="service-card gateway"><span class="svc-name">API Gateway</span><span class="svc-port">:8080</span><span class="svc-tech">Spring Cloud Gateway • JWT • Rate Limiting</span></div>
+                <div class="service-card eureka"><span class="svc-name">Discovery Server</span><span class="svc-port">:8761</span><span class="svc-tech">Netflix Eureka</span></div>
+                <div class="service-card auth"><span class="svc-name">Auth Service</span><span class="svc-port">:8081</span><span class="svc-tech">JWT • BCrypt • PostgreSQL</span></div>
+                <div class="service-card jobs"><span class="svc-name">Job Queue</span><span class="svc-port">:8082</span><span class="svc-tech">Redis Sorted Set • Kafka • Retry + DLQ</span></div>
+                <div class="service-card chat-svc"><span class="svc-name">Chat Service</span><span class="svc-port">:8083</span><span class="svc-tech">WebSocket • Redis Pub/Sub • Kafka</span></div>
+                <div class="service-card order"><span class="svc-name">Order Service</span><span class="svc-port">:8084</span><span class="svc-tech">Saga Orchestrator • Kafka</span></div>
+                <div class="service-card payment"><span class="svc-name">Payment Service</span><span class="svc-port">:8085</span><span class="svc-tech">Saga Participant</span></div>
+                <div class="service-card inventory"><span class="svc-name">Inventory Service</span><span class="svc-port">:8086</span><span class="svc-tech">Optimistic Locking • Saga Participant</span></div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Jobs Tab -->
+    <main id="tab-jobs" class="tab-content">
+        <div class="page-header"><h2>🔧 Job Queue System</h2><p>Priority queues with exponential backoff retry and dead-letter queue</p></div>
+        <div class="panel">
+            <h3>Submit Job</h3>
+            <form id="jobForm" onsubmit="submitJob(event)">
+                <div class="form-row">
+                    <input type="text" id="jobName" placeholder="Job Name" required class="input">
+                    <select id="jobPriority" class="input">
+                        <option value="HIGH">🔴 HIGH</option>
+                        <option value="MEDIUM" selected>🟡 MEDIUM</option>
+                        <option value="LOW">🟢 LOW</option>
+                    </select>
+                    <input type="number" id="jobRetries" value="3" min="1" max="10" class="input" style="width:100px">
+                    <button type="submit" class="btn btn-primary">Submit</button>
+                </div>
+                <textarea id="jobPayload" placeholder='{"task": "process_data", "batch": 1}' class="input textarea"></textarea>
+            </form>
+        </div>
+        <div class="panel">
+            <h3>Job Stats</h3>
+            <div class="stats-row" id="jobStats">
+                <div class="mini-stat"><span class="ms-val" id="statQueued">0</span><span class="ms-label">Queued</span></div>
+                <div class="mini-stat"><span class="ms-val" id="statProcessing">0</span><span class="ms-label">Processing</span></div>
+                <div class="mini-stat"><span class="ms-val" id="statCompleted">0</span><span class="ms-label">Completed</span></div>
+                <div class="mini-stat"><span class="ms-val" id="statFailed">0</span><span class="ms-label">Failed</span></div>
+                <div class="mini-stat"><span class="ms-val" id="statDlq">0</span><span class="ms-label">DLQ</span></div>
+                <div class="mini-stat"><span class="ms-val" id="statSuccessRate">0%</span><span class="ms-label">Success Rate</span></div>
+            </div>
+        </div>
+        <div class="panel">
+            <h3>Recent Jobs</h3>
+            <table class="table" id="jobsTable">
+                <thead><tr><th>ID</th><th>Name</th><th>Priority</th><th>Status</th><th>Retries</th><th>Created</th></tr></thead>
+                <tbody id="jobsBody"></tbody>
+            </table>
+        </div>
+    </main>
+
+    <!-- Chat Tab -->
+    <main id="tab-chat" class="tab-content">
+        <div class="page-header"><h2>💬 Real-Time Chat</h2><p>WebSocket + STOMP with Redis Pub/Sub for horizontal scaling</p></div>
+        <div class="chat-layout">
+            <div class="chat-sidebar">
+                <h3>Rooms</h3>
+                <div id="roomList"></div>
+                <button class="btn btn-secondary" onclick="showModal('roomModal')" style="margin-top:10px;width:100%">+ New Room</button>
+            </div>
+            <div class="chat-main">
+                <div class="chat-header" id="chatHeader">Select a room to start chatting</div>
+                <div class="chat-messages" id="chatMessages"></div>
+                <form class="chat-input" onsubmit="sendChatMessage(event)">
+                    <input type="text" id="chatInput" placeholder="Type a message..." class="input" disabled>
+                    <button type="submit" class="btn btn-primary" id="chatSendBtn" disabled>Send</button>
+                </form>
+            </div>
+        </div>
+    </main>
+
+    <!-- Checkout Tab -->
+    <main id="tab-checkout" class="tab-content">
+        <div class="page-header"><h2>🛒 Event-Driven Checkout</h2><p>Saga pattern with compensation across Payment, Inventory, and Notification services</p></div>
+        <div class="checkout-layout">
+            <div class="panel">
+                <h3>Products</h3>
+                <div id="productGrid" class="product-grid"></div>
+            </div>
+            <div class="panel">
+                <h3>Place Order</h3>
+                <form id="orderForm" onsubmit="placeOrder(event)">
+                    <select id="orderProduct" class="input"></select>
+                    <input type="number" id="orderQty" value="1" min="1" max="10" class="input" placeholder="Quantity">
+                    <button type="submit" class="btn btn-primary">Place Order</button>
+                </form>
+            </div>
+            <div class="panel">
+                <h3>Orders & Saga Progress</h3>
+                <table class="table">
+                    <thead><tr><th>Order ID</th><th>Product</th><th>Qty</th><th>Status</th><th>Saga</th><th>Actions</th></tr></thead>
+                    <tbody id="ordersBody"></tbody>
+                </table>
+            </div>
+        </div>
+    </main>
+
+    <!-- Logs Tab -->
+    <main id="tab-logs" class="tab-content">
+        <div class="page-header"><h2>📊 Log Aggregation</h2><p>Kafka → Logstash → Elasticsearch → Kibana</p></div>
+        <div class="panel">
+            <div class="elk-info">
+                <h3>ELK Stack</h3>
+                <p>All services ship structured JSON logs to Kafka topic <code>application-logs</code>. Logstash consumes from Kafka and indexes into Elasticsearch. Kibana provides dashboards and search.</p>
+                <div class="elk-links">
+                    <a href="http://localhost:5601" target="_blank" class="btn btn-primary">Open Kibana →</a>
+                    <a href="http://localhost:9200/_cat/indices?v" target="_blank" class="btn btn-secondary">ES Indices →</a>
+                    <a href="http://localhost:8761" target="_blank" class="btn btn-secondary">Eureka Dashboard →</a>
+                </div>
+                <div class="elk-pipeline">
+                    <div class="pipe-step">📱 Services</div>
+                    <div class="pipe-arrow">→</div>
+                    <div class="pipe-step">📡 Kafka</div>
+                    <div class="pipe-arrow">→</div>
+                    <div class="pipe-step">⚙️ Logstash</div>
+                    <div class="pipe-arrow">→</div>
+                    <div class="pipe-step">🔍 Elasticsearch</div>
+                    <div class="pipe-arrow">→</div>
+                    <div class="pipe-step">📊 Kibana</div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Login Modal -->
+    <div class="modal" id="loginModal">
+        <div class="modal-content">
+            <div class="modal-header"><h3>Login / Register</h3><button class="modal-close" onclick="hideModal('loginModal')">×</button></div>
+            <div class="modal-tabs">
+                <button class="mtab active" onclick="switchModalTab(this,'loginForm')">Login</button>
+                <button class="mtab" onclick="switchModalTab(this,'registerForm')">Register</button>
+            </div>
+            <form id="loginForm" class="modal-form" onsubmit="login(event)">
+                <input type="text" id="loginUsername" placeholder="Username" required class="input">
+                <input type="password" id="loginPassword" placeholder="Password" required class="input">
+                <button type="submit" class="btn btn-primary" style="width:100%">Login</button>
+            </form>
+            <form id="registerForm" class="modal-form" style="display:none" onsubmit="register(event)">
+                <input type="text" id="regUsername" placeholder="Username" required class="input">
+                <input type="email" id="regEmail" placeholder="Email" required class="input">
+                <input type="password" id="regPassword" placeholder="Password" required class="input">
+                <button type="submit" class="btn btn-primary" style="width:100%">Register</button>
+            </form>
+            <div id="authMessage" class="auth-msg"></div>
+        </div>
+    </div>
+
+    <!-- Room Modal -->
+    <div class="modal" id="roomModal">
+        <div class="modal-content">
+            <div class="modal-header"><h3>Create Room</h3><button class="modal-close" onclick="hideModal('roomModal')">×</button></div>
+            <form onsubmit="createRoom(event)">
+                <input type="text" id="roomId" placeholder="Room name (e.g. general)" required class="input">
+                <input type="text" id="roomDesc" placeholder="Description" class="input">
+                <button type="submit" class="btn btn-primary" style="width:100%">Create</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Saga Modal -->
+    <div class="modal" id="sagaModal">
+        <div class="modal-content modal-lg">
+            <div class="modal-header"><h3>Saga Log</h3><button class="modal-close" onclick="hideModal('sagaModal')">×</button></div>
+            <div id="sagaTimeline" class="saga-timeline"></div>
+        </div>
+    </div>
+
+    <div id="toast" class="toast"></div>
+
+    <script src="https://cdn.jsdelivr.net/npm/sockjs-client@1/dist/sockjs.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/stompjs@2.3.3/lib/stomp.min.js"></script>
+    <script src="app.js"></script>
+</body>
+</html>
